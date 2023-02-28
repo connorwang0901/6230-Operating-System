@@ -28,11 +28,12 @@ partial class Program {
         Console.WriteLine(Thread.CurrentThread.Name + " is running");
     }
 
-    
+    static double[] arr = arrayInitial();
+    static double[] partialRes = new double[4];
     // ****** question 2 ******
     static void question2(){
         // step1 - initialized an array
-        double[] arr = arrayInitial();
+        
         double sum = 0;
         
         // step2 - multiply each element in our array with random numbers
@@ -47,25 +48,42 @@ partial class Program {
             sum += arr[i];
         }
         DateTime end = DateTime.Now;
-        double serialTime = end.Subtract(start).TotalSeconds * 1000; //ms
+        double serialTime = end.Subtract(start).TotalSeconds * 1000; 
         
         // step4 - calculate the sum using paralell way
         sum = 0;
-        start = DateTime.Now;
-        Parallel.ForEach(arr, number =>{
-            sum += number;
-        });
+        start = DateTime.Now; 
+        Thread[] ths = new Thread[4];
+        for(int i = 0; i < ths.Length; i++) {
+            ths[i] = new Thread(partilCal);
+            Tasks t = new Tasks(i * 30000, i * 30000 + 29999);
+            ths[i].Name = i.ToString();
+            ths[i].Start(t);
+        }
+
+        for(int i = 0; i < ths.Length; i++) {
+            ths[i].Join();
+        }
+
+        for(int i = 0; i < partialRes.Length; i++) {
+            sum += partialRes[i];
+        }
         end = DateTime.Now;
         double paralellTime = end.Subtract(start).TotalSeconds * 1000; //ms
         
+        // ************************ solution 2 ************************
+        // Parallel.ForEach(arr, number =>{
+        //     sum += number;
+        // });
+
         // step5 - calculate difference and print on screen
         Console.WriteLine("*********** Question 2 ***********");
         Console.WriteLine("the serial time is : " + serialTime);
         Console.WriteLine("the paralell time is : " + paralellTime);
         Console.WriteLine("the difference is : " + (serialTime - paralellTime));
     }
-        static double[] arrayInitial(){
-        double[] randomNumbers = new double[8];
+    static double[] arrayInitial(){
+        double[] randomNumbers = new double[120000];
         Random rand = new Random();
 
         for (int i = 0; i < randomNumbers.Length; i++) {
@@ -74,4 +92,13 @@ partial class Program {
         return randomNumbers;
     }
 
+    static void partilCal(Object obj){
+        
+        double tmp = 0;
+        Tasks t = (Tasks)obj;
+        for(int i = t.startIdx; i <= t.endIdx; i++){
+                tmp += arr[i];
+        }
+        partialRes[int.Parse(Thread.CurrentThread.Name)] = tmp;
+    }
 }
